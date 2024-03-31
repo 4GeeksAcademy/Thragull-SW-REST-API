@@ -50,7 +50,7 @@ class User(db.Model):
     zipcode = db.Column(db.Integer, nullable=False)
     city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
     city = db.relationship(City)
-    phone = db.Column(db.Integer, nullable=False)
+    phone = db.Column(db.BigInteger, nullable=False)
     registered = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
@@ -130,7 +130,7 @@ class Characters(db.Model):
     name = db.Column(db.String(50), nullable=False)
     height = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Integer, nullable=False)
-    planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'), unique=True, nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'), nullable=False)
     planet= db.relationship(Planets)
     commands_id = db.Column(db.Integer, db.ForeignKey('starships.id'), unique=True)
     commands = db.relationship(Starships)
