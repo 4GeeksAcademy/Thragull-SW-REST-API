@@ -46,7 +46,8 @@ def get_users():
         user_details=user.serialize()
         user_details['city']= city.name
         user_details['country']= country.name
-        users_serialized.append(user_details)
+        if user_details['is_active']:
+            users_serialized.append(user_details)
 
     response_body = {
         "msg": "OK",
@@ -54,6 +55,50 @@ def get_users():
     }
 
     return jsonify(response_body), 200
+
+@app.route('/user', methods=['POST'])
+def add_user():
+    body = request.get_json(silent=True)
+    if body is  None:
+        return jsonify({'msg':'Body must contain something'}), 400
+    if ('username' not in body or 
+    'name' not in body or 
+    'surname' not in body or 
+    'email' not in body or 
+    'password' not in body or 
+    'address' not in body or 
+    'country_id' not in body or 
+    'city_id' not in body or 
+    'zipcode' not in body or 
+    'phone' not in body):
+        return jsonify({'msg': 'One of the following fields is missing: Username, name, surname, email, password, address, country_id, city_id, zipcode or phone'}), 400
+    country_exist_in_db = Country.query.filter_by(id=body['country_id']).first()
+    if not country_exist_in_db:
+        return jsonify({'msg': 'The country id {} does not exist in this database'.format(body['country_id'])}), 400
+    city_exist_in_db = City.query.filter_by(id=body['city_id']).first()
+    if not city_exist_in_db:
+        return jsonify({'msg': 'The city id {} does not exist in this database'.format(body['city_id'])}), 400
+    user = User()
+    user.username= body['username']
+    user.name= body['name']
+    user.surname= body['surname']
+    user.email= body['email']
+    user.password= body['password']
+    user.address= body['address']
+    if 'address2' in body:
+        user.address2= body['address2']
+    if 'address3' in body:
+        user.address3= body['address3']
+    user.country_id= body['country_id']
+    user.city_id= body['city_id']
+    user.zipcode= body['zipcode']
+    user.phone= body['phone']
+
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({'msg': 'New user added'}), 201
+
 
 @app.route('/user/favourites', methods=['GET'])
 def get_user_favourites():
@@ -71,17 +116,24 @@ def get_user_favourites():
     favourite_planets = db.session.query(Favourite_Planets, Planets).join(Planets).filter(Favourite_Planets.user_id == body['user_id']).all()
     favourite_planets_serialized = []
     for favourite, planet in favourite_planets:
-        favourite_planets_serialized.append({'favourite_planet_id': favourite.id, 'favourite_planet': planet.serialize()})
+        if favourite.serialize()['is_active']:
+            favourite_planets_serialized.append({'favourite_planet_id': favourite.id, 'favourite_planet': planet.serialize()})
     
-    favourite_characters = db.session.query(Favourite_Characters, Characters).join(Characters).filter(Favourite_Characters.user_id == body['user_id']).all()
+    favourite_characters = db.session.query(Favourite_Characters, Characters, Starships, Planets).select_from(Favourite_Characters).join(Characters).outerjoin(Starships).join(Planets).filter(Favourite_Characters.user_id == body['user_id']).all()
     favourite_characters_serialized = []
-    for favourite, character in favourite_characters:
-        favourite_characters_serialized.append({'favourite_character_id': favourite.id, 'favourite_character': character.serialize()})
+    for favourite, character, starship, planet in favourite_characters:
+        if favourite.serialize()['is_active']:
+            favourite_character= character.serialize()
+            favourite_character['planet']=planet.name
+            if favourite_character['commands'] is not None:
+                favourite_character['commands']=starship.name
+            favourite_characters_serialized.append({'favourite_character_id': favourite.id, 'favourite_character': favourite_character})
 
     favourite_starships = db.session.query(Favourite_Starships, Starships).join(Starships).filter(Favourite_Starships.user_id == body['user_id']).all()
     favourite_starships_serialized = []
     for favourite, starship in favourite_starships:
-        favourite_starships_serialized.append({'favourite_starship_id': favourite.id, 'favourite_starship': starship.serialize()})
+        if favourite.serialize()['is_active']:
+            favourite_starships_serialized.append({'favourite_starship_id': favourite.id, 'favourite_starship': starship.serialize()})
     
     response_body = {
         "msg": "OK",
@@ -117,6 +169,29 @@ def get_planet_by_id(id):
 
     return jsonify(response_body), 200
 
+@app.route('/planets', methods=['POST'])
+def add_planet():
+    body= request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'The body must contain something'}), 400
+    if ('name' not in body or
+    'population' not in body or
+    'area' not in body):
+        return jsonify({'msg': 'One of the following fields is missing: name, population or area'}), 400
+    planet=Planets()
+    planet.name=body['name']
+    planet.population=body['population']
+    planet.area=body['area']
+    if 'suns' in body:
+        planet.suns=body['suns']
+    if 'moons' in body:
+        planet.moons=body['moons']
+    
+    db.session.add(planet)
+    db.session.commit()
+
+    return jsonify({'msg': 'Planet has been added'}), 201
+
 @app.route('/starships', methods=['GET'])
 def get_starships():
     # SELECT * FROM "Starships"
@@ -141,6 +216,29 @@ def get_starship_by_id(id):
     }
 
     return jsonify(response_body), 200
+
+@app.route('/starships', methods=['POST'])
+def add_starship():
+    body= request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'The body must contain something'}), 400
+    if ('name' not in body or
+    'model' not in body or
+    'crew_capacity' not in body or
+    'length' not in body or
+    'width' not in body):
+        return jsonify({'msg': 'One of the following fields is missing: name, model, crew_capacity, length or width'}), 400
+    starship=Starships()
+    starship.name=body['name']
+    starship.model=body['model']
+    starship.crew_capacity =body['crew_capacity']
+    starship.length=body['length']
+    starship.width=body['width']
+    
+    db.session.add(starship)
+    db.session.commit()
+
+    return jsonify({'msg': 'Starship has been added'}), 201
 
 @app.route('/characters', methods=['GET'])
 def get_characters():

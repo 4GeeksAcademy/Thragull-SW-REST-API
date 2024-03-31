@@ -82,8 +82,8 @@ class Planets(db.Model):
     name = db.Column(db.String(50), nullable=False)
     population = db.Column(db.BigInteger, nullable=False)
     area = db.Column(db.Integer, nullable=False)
-    suns =  db.Column(db.Integer)
-    moons = db.Column(db.Integer)
+    suns =  db.Column(db.Integer, default=1)
+    moons = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
