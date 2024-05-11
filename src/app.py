@@ -10,6 +10,7 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, Country, City, User, Planets, Starships, Characters, Favourite_Planets, Favourite_Starships, Favourite_Characters
 #from models import Person
+from dbfiller import insert_countries, insert_worldwide_cities, insert_planets, insert_starships, insert_characters
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -264,6 +265,16 @@ def get_character_by_id(id):
     }
 
     return jsonify(response_body), 200
+
+@app.route('/api/dbfiller', methods=['GET'])
+def db_filler():
+    insert_countries()
+    insert_worldwide_cities()
+    insert_planets()
+    insert_starships()
+    insert_characters()
+
+    return jsonify({'msg': 'Everything is all right'})
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

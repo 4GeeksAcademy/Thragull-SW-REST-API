@@ -84,7 +84,6 @@ class Planets(db.Model):
     area = db.Column(db.Integer, nullable=False)
     suns =  db.Column(db.Integer, default=1)
     moons = db.Column(db.Integer, default=0)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Planet: {self.name}'
@@ -96,8 +95,7 @@ class Planets(db.Model):
             "population": self.population,
             "area": self.area,
             "suns": self.suns,
-            "moons": self.moons,
-            "is_active": self.is_active
+            "moons": self.moons
         }
     
 class Starships(db.Model):
@@ -108,7 +106,6 @@ class Starships(db.Model):
     crew_capacity = db.Column(db.Integer, nullable=False)
     length = db.Column(db.Float, nullable=False)
     width =  db.Column(db.Float, nullable=False)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Starship: {self.name}'
@@ -120,8 +117,7 @@ class Starships(db.Model):
             "model": self.model,
             "crew_capacity": self.crew_capacity,
             "length": self.length,
-            "width": self.width,
-            "is_active": self.is_active
+            "width": self.width
         }
 
 class Characters(db.Model):
@@ -130,11 +126,10 @@ class Characters(db.Model):
     name = db.Column(db.String(50), nullable=False)
     height = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Integer, nullable=False)
-    planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'), nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'))
     planet= db.relationship(Planets)
     commands_id = db.Column(db.Integer, db.ForeignKey('starships.id'), unique=True)
     commands = db.relationship(Starships)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Character: {self.name}'
@@ -146,8 +141,7 @@ class Characters(db.Model):
             "height": self.height,
             "weight": self.weight,
             "planet": self.planet_id,
-            "commands": self.commands_id,
-            "is_active": self.is_active
+            "commands": self.commands_id
         }
 
 class Starship_Crew(db.Model):
@@ -157,7 +151,6 @@ class Starship_Crew(db.Model):
     starship = db.relationship(Starships)
     character_id = db.Column(db.Integer, db.ForeignKey('characters.id'), nullable=False)
     character = db.relationship(Characters)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'{self.character} is part of the crew in the Starship {self.starship}'
@@ -166,8 +159,7 @@ class Starship_Crew(db.Model):
         return {
             "id": self.id,
             "starship": self.starship_id,
-            "character": self.character_id,
-            "is_active": self.is_active
+            "character": self.character_id
         }
 
 
@@ -178,7 +170,6 @@ class Favourite_Characters(db.Model):
     user = db.relationship(User)
     character_id = db.Column(db.Integer, db.ForeignKey('characters.id'), nullable=False)
     character = db.relationship(Characters)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Favourite {self.character} from {self.user}'
@@ -187,8 +178,7 @@ class Favourite_Characters(db.Model):
         return {
             "id": self.id,
             "user": self.user_id,
-            "character": self.character_id,
-            "is_active": self.is_active
+            "character": self.character_id
         }
 
 class Favourite_Starships(db.Model):
@@ -198,7 +188,6 @@ class Favourite_Starships(db.Model):
     user = db.relationship(User)
     starship_id = db.Column(db.Integer, db.ForeignKey('starships.id'), nullable=False)
     starship = db.relationship(Starships)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Favourite {self.starship} from {self.user}'
@@ -207,8 +196,7 @@ class Favourite_Starships(db.Model):
         return {
             "id": self.id,
             "user": self.user_id,
-            "starship": self.starship_id,
-            "is:active": self.is_active
+            "starship": self.starship_id
         }
 
 class Favourite_Planets(db.Model):
@@ -218,7 +206,6 @@ class Favourite_Planets(db.Model):
     user = db.relationship(User)
     planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'), nullable=False)
     planet = db.relationship(Planets)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False, default=True)
 
     def __repr__(self):
         return f'Favourite {self.planet} from {self.user}'
@@ -227,6 +214,5 @@ class Favourite_Planets(db.Model):
         return {
             "id": self.id,
             "user": self.user_id,
-            "planet": self.planet_id,
-            "is_active": self.is_active
+            "planet": self.planet_id
         }
