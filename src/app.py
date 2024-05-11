@@ -163,6 +163,8 @@ def get_planet_by_id(id):
     # SELECT * FROM planets WHERE id = {planet_id};
 
     planet = Planets.query.get(id)
+    if planet is None:
+        return jsonify({'msg': 'Planet not found'})
     response_body = {
         "msg": "OK",
         "response": planet.serialize()
@@ -170,7 +172,7 @@ def get_planet_by_id(id):
 
     return jsonify(response_body), 200
 
-@app.route('/planets', methods=['POST'])
+@app.route('/planet', methods=['POST'])
 def add_planet():
     body= request.get_json(silent=True)
     if body is None:
@@ -192,6 +194,40 @@ def add_planet():
     db.session.commit()
 
     return jsonify({'msg': 'Planet has been added'}), 201
+
+@app.route('/planet/<int:id>', methods=['PUT'])
+def modify_planet(id):
+    body= request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'The body must contain something'}), 400
+    if ('name' not in body and
+    'population' not in body and
+    'area' not in body and
+    'suns' not in body and
+    'moons' not in body):
+        return jsonify({'msg': 'You must specify at least one valid field to modify'}), 400
+    planet=Planets().query.get(id)
+    if planet is None:
+        return jsonify({'msg': 'There is no planet with this ID'}), 404
+    for key, value in body.items():
+        if hasattr(planet, key):
+            setattr(planet, key , value)
+        else:
+            return jsonify({'msg': 'Invalid Field: {}'.format(key)})
+    
+    db.session.commit()
+
+    return jsonify({'msg': 'Planet has been succesfully modified'}), 200
+
+@app.route('/planet/<int:id>', methods=['DELETE'])
+def delete_planet(id):
+    planet = Planets.query.get(id)
+    if planet is None:
+        return jsonify({'msg': 'The planet does not exist in database'}), 404
+    db.session.delete(planet)
+    db.session.commit()
+
+    return jsonify({'msg': 'Planet deleted succesfully'}), 200
 
 @app.route('/starships', methods=['GET'])
 def get_starships():
@@ -218,7 +254,7 @@ def get_starship_by_id(id):
 
     return jsonify(response_body), 200
 
-@app.route('/starships', methods=['POST'])
+@app.route('/starship', methods=['POST'])
 def add_starship():
     body= request.get_json(silent=True)
     if body is None:
@@ -240,6 +276,41 @@ def add_starship():
     db.session.commit()
 
     return jsonify({'msg': 'Starship has been added'}), 201
+
+@app.route('/starship/<int:id>', methods=['PUT'])
+def modify_starship(id):
+    body= request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if ('name' not in body and
+    'model' not in body and
+    'crew_capacity' not in body and
+    'length' not in body and
+    'width' not in body):
+        return jsonify({'msg': 'You must specify at least one mandatory field'}), 400
+    starship = Starships.query.get(id)
+    if starship is None:
+        return jsonify({'msg': 'There is no starship with this ID'}), 404
+    for key, value in body.items():
+        if hasattr(starship, key):
+            setattr(starship, key, value)
+        else:
+            return jsonify({'msg': 'Invalid Field: {}'.format(key)}), 400
+        
+    db.session.commit()
+
+    return jsonify({'msg': 'Starship succesfully modified'}), 200
+
+@app.route('/starship/<int:id>', methods=['DELETE'])
+def delete_starship(id):
+    starship = Starships.query.get(id)
+    if starship is None:
+        return jsonify({'msg': 'There is no starship in Database with this ID'}), 404
+    
+    db.session.delete(starship)
+    db.session.commit()
+
+    return jsonify({'msg': 'Starship succesfully deleted'}), 200
 
 @app.route('/characters', methods=['GET'])
 def get_characters():
@@ -266,10 +337,66 @@ def get_character_by_id(id):
 
     return jsonify(response_body), 200
 
+@app.route('/character', methods=['POST'])
+def post_character():
+    body=request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if ('name' not in body or
+        'height' not in body or
+        'weight' not in body):
+        return jsonify({'msg': 'One or more of the mandatory fields are missing'}), 400
+    character = Characters()
+    for key, value in body.items():
+        if hasattr(character, key):
+            setattr(character, key, value)
+        else:
+            return jsonify({'msg': 'Invalid Field {}'.format(key)}), 400
+    
+    db.session.add(character)
+    db.session.commit()
+
+    return jsonify({'msg': 'New character succesfully added'}), 201
+
+@app.route('/character/<int:id>', methods=['PUT'])
+def modify_character(id):
+    body= request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if ('name' not in body and
+        'height' not in body and
+        'weight' not in body and
+        'planet_id' not in body and
+        'commands_id' not in body):
+        return jsonify({'msg': 'You must specify at least one mandatory field'}), 400
+    character = Characters.query.get(id)
+    if character is None:
+        return jsonify({'msg': 'There is no Character with this ID'}), 404
+    for key, value in body.items():
+        if hasattr(character, key):
+            setattr(character, key, value)
+        else:
+            return jsonify({'msg': 'Invalid Field: {}'.format(key)}), 400
+    
+    db.session.commit()
+
+    return jsonify({'msg': 'Character succesfully modified'}), 200
+
+@app.route('/character/<int:id>', methods=['DELETE'])
+def delete_character(id):
+    character = Characters.query.get(id)
+    if character is None:
+        return jsonify({'msg': 'There is no character with this ID'}), 404
+    
+    db.session.delete(character)
+    db.session.commit()
+
+    return jsonify({'msg': 'Character succesfully deleted'}), 200
+
 @app.route('/api/dbfiller', methods=['GET'])
 def db_filler():
-    insert_countries()
-    insert_worldwide_cities()
+    #insert_countries()
+    #insert_worldwide_cities()
     insert_planets()
     insert_starships()
     insert_characters()
