@@ -133,24 +133,21 @@ def get_user_favourites():
     favourite_planets = db.session.query(Favourite_Planets, Planets).join(Planets).filter(Favourite_Planets.user_id == body['user_id']).all()
     favourite_planets_serialized = []
     for favourite, planet in favourite_planets:
-        if favourite.serialize()['is_active']:
-            favourite_planets_serialized.append({'favourite_planet_id': favourite.id, 'favourite_planet': planet.serialize()})
+        favourite_planets_serialized.append({'favourite_planet_id': favourite.id, 'favourite_planet': planet.serialize()})
     
     favourite_characters = db.session.query(Favourite_Characters, Characters, Starships, Planets).select_from(Favourite_Characters).join(Characters).outerjoin(Starships).join(Planets).filter(Favourite_Characters.user_id == body['user_id']).all()
     favourite_characters_serialized = []
     for favourite, character, starship, planet in favourite_characters:
-        if favourite.serialize()['is_active']:
-            favourite_character= character.serialize()
-            favourite_character['planet']=planet.name
-            if favourite_character['commands'] is not None:
-                favourite_character['commands']=starship.name
-            favourite_characters_serialized.append({'favourite_character_id': favourite.id, 'favourite_character': favourite_character})
+        favourite_character= character.serialize()
+        favourite_character['planet']=planet.name
+        if favourite_character['commands'] is not None:
+            favourite_character['commands']=starship.name
+        favourite_characters_serialized.append({'favourite_character_id': favourite.id, 'favourite_character': favourite_character})
 
     favourite_starships = db.session.query(Favourite_Starships, Starships).join(Starships).filter(Favourite_Starships.user_id == body['user_id']).all()
     favourite_starships_serialized = []
     for favourite, starship in favourite_starships:
-        if favourite.serialize()['is_active']:
-            favourite_starships_serialized.append({'favourite_starship_id': favourite.id, 'favourite_starship': starship.serialize()})
+        favourite_starships_serialized.append({'favourite_starship_id': favourite.id, 'favourite_starship': starship.serialize()})
     
     response_body = {
         "msg": "OK",
@@ -181,7 +178,7 @@ def post_favourite_planet(id):
     db.session.add(favourite_planet)
     db.session.commit()
 
-    return jsonify({'msg': 'Favourite Planet succesfully created'}), 201
+    return jsonify({'msg': 'Favourite Planet succesfully added'}), 201
 
 @app.route('/favourite/planet/<int:id>', methods=['DELETE'])
 def delete_favourite_planet(id):
@@ -201,6 +198,88 @@ def delete_favourite_planet(id):
     db.session.commit()
 
     return jsonify({'msg': 'Favourite planet succesfully deleted'}), 200
+
+@app.route('/favourite/starship/<int:id>', methods=['POST'])
+def post_favourite_starship(id):
+    body=request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a User Id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_starship = Favourite_Starships.query.filter_by(user_id=body['user_id'], starship_id=id).first()
+    if favourite_starship is not None:
+        return jsonify({'msg': 'This starship is already a favourite for this user'}), 400
+    favourite_starship = Favourite_Starships()
+    favourite_starship.starship_id=id
+    favourite_starship.user_id=body['user_id']
+
+    db.session.add(favourite_starship)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite Starship succesfully added'}), 201
+
+@app.route('/favourite/starship/<int:id>', methods=['DELETE'])
+def delete_favourite_starship(id):
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a user_id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_starship = Favourite_Starships.query.filter_by(user_id=body['user_id'], starship_id=id).first()
+    if favourite_starship is None:
+        return jsonify({'msg': 'This user does not have this starship as favourite'}), 404
+    
+    db.session.delete(favourite_starship)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite starship succesfully deleted'}), 200
+
+@app.route('/favourite/character/<int:id>', methods=['POST'])
+def post_favourite_character(id):
+    body=request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a User Id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_character = Favourite_Characters.query.filter_by(user_id=body['user_id'], character_id=id).first()
+    if favourite_character is not None:
+        return jsonify({'msg': 'This character is already a favourite for this user'}), 400
+    favourite_character = Favourite_Characters()
+    favourite_character.character_id=id
+    favourite_character.user_id=body['user_id']
+
+    db.session.add(favourite_character)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite Character succesfully added'}), 201
+
+@app.route('/favourite/character/<int:id>', methods=['DELETE'])
+def delete_favourite_character(id):
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a user_id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_character = Favourite_Characters.query.filter_by(user_id=body['user_id'], character_id=id).first()
+    if favourite_character is None:
+        return jsonify({'msg': 'This user does not have this character as favourite'}), 404
+    
+    db.session.delete(favourite_character)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite character succesfully deleted'}), 200
 
 @app.route('/planets', methods=['GET'])
 def get_planets():
