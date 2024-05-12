@@ -37,6 +37,22 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+@app.route('/api/countries', methods=['GET'])
+def get_countries():
+    countries = db.session.query(Country).all()
+    countries_serialized = []
+    for country in countries:
+        countries_serialized.append(country.serialize())
+    return jsonify(countries_serialized), 200
+
+@app.route('/api/cities', methods=['GET'])
+def get_cities():
+    cities = db.session.query(City).all()
+    cities_serialized = []
+    for city in cities:
+        cities_serialized.append(city.serialize())
+    return jsonify(cities_serialized), 200
+
 @app.route('/user', methods=['GET'])
 def get_users():
     # SELECT * FROM "Users"
@@ -144,6 +160,47 @@ def get_user_favourites():
     }
 
     return jsonify(response_body), 200
+
+@app.route('/favourite/planet/<int:id>', methods=['POST'])
+def post_favourite_planet(id):
+    body=request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a User Id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_planet = Favourite_Planets.query.filter_by(user_id=body['user_id'], planet_id=id).first()
+    if favourite_planet is not None:
+        return jsonify({'msg': 'This planet is already a favourite for this user'}), 400
+    favourite_planet = Favourite_Planets()
+    favourite_planet.planet_id=id
+    favourite_planet.user_id=body['user_id']
+
+    db.session.add(favourite_planet)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite Planet succesfully created'}), 201
+
+@app.route('/favourite/planet/<int:id>', methods=['DELETE'])
+def delete_favourite_planet(id):
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({'msg': 'Body must contain something'}), 400
+    if 'user_id' not in body:
+        return jsonify({'msg': 'You must specify a user_id'}), 400
+    user = User.query.get(body['user_id'])
+    if user is None:
+        return jsonify({'msg': 'There is no User with this ID'}), 404
+    favourite_planet = Favourite_Planets.query.filter_by(user_id=body['user_id'], planet_id=id).first()
+    if favourite_planet is None:
+        return jsonify({'msg': 'This user does not have this planet as favourite'}), 404
+    
+    db.session.delete(favourite_planet)
+    db.session.commit()
+
+    return jsonify({'msg': 'Favourite planet succesfully deleted'}), 200
 
 @app.route('/planets', methods=['GET'])
 def get_planets():
